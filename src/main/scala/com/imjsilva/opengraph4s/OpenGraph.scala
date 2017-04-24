@@ -1,11 +1,11 @@
 package com.typedlabs.opengraph4s
 
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Element
-import scala.collection.JavaConverters._
-import scala.annotation.tailrec
-
 import cats.implicits._
+
+import org.jsoup.Jsoup
+import scala.collection.JavaConverters._
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 case class OpenGraph(  
   `type`: Option[String] = None,
@@ -26,7 +26,7 @@ object OpenGraph {
   type OpenGraphProperties = Map[String, List[String]]
   type MediaConverter[A] = (String, Int) => A
 
-  def extract(url: String): OpenGraph = {
+  def extract(url: String)(implicit ctx: ExecutionContext):Future[Either[OpenGraphError, OpenGraph]] = Future {
 
     val props: OpenGraphProperties = 
       Jsoup.connect(url).get().select("[property]")
@@ -46,20 +46,27 @@ object OpenGraph {
           entry.fold(m) { case (k, v) => m combine Map(k -> List(v)) }
 
         }
+    if(props.isEmpty){
+      Left(OpenGraphNotFound())
+    } else {
+      val og = 
+        OpenGraph(
+          `type` = props.get("og:type").map(_.mkString),
+          url = props.get("og:url").map(_.mkString),
+          title = props.get("og:title").map(_.mkString),
+          description = props.get("og:description").map(_.mkString),
+          determiner = props.get("og:determiner").map(_.mkString),
+          locale = props.get("og:locale").map(_.mkString),
+          siteName = props.get("og:site_name").map(_.mkString),
+          localesAlternate = props.get("og:locale:alternate").getOrElse(Nil),
+          images = extractImages(props),
+          videos = extractVideos(props),
+          audios = extractAudios(props)
+        )        
+      Right(og)
+    }
 
-    OpenGraph(
-      `type` = props.get("og:type").map(_.mkString),
-      url = props.get("og:url").map(_.mkString),
-      title = props.get("og:title").map(_.mkString),
-      description = props.get("og:description").map(_.mkString),
-      determiner = props.get("og:determiner").map(_.mkString),
-      locale = props.get("og:locale").map(_.mkString),
-      siteName = props.get("og:site_name").map(_.mkString),
-      localesAlternate = props.get("og:locale:alternate").getOrElse(Nil),
-      images = extractImages(props),
-      videos = extractVideos(props),
-      audios = extractAudios(props)
-    )
+    
 
   }
   
