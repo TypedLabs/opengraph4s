@@ -26,6 +26,9 @@ object OpenGraph {
   type OpenGraphProperties = Map[String, List[String]]
   type MediaConverter[A] = (String, Int) => A
 
+  /** Extract open graph data
+  *  @param url the url from wich to extract the opengraph data
+  */
   def extract(url: String)(implicit ctx: ExecutionContext):Future[Either[OpenGraphError, OpenGraph]] = Future {
 
     val props: OpenGraphProperties = 
@@ -47,7 +50,7 @@ object OpenGraph {
 
         }
     if(props.isEmpty){
-      Left(OpenGraphNotFound())
+      Left(OpenGraphNotFound)
     } else {
       val og = 
         OpenGraph(
@@ -66,12 +69,22 @@ object OpenGraph {
       Right(og)
     }
 
-    
-
   }
-  
+
+  /** Extract opengraph images
+  *  @param tags the opengraph properites extracted from the document
+  *  @param block the media converter function
+  */
+  private def extractMedia[A](tags: Option[List[String]])(block: MediaConverter[A]): List[A] =
+    tags
+      .map(_.zipWithIndex.map{ case (url, i) => block(url, i) })
+      .getOrElse(Nil)
+
+  /** Extract opengraph images
+  *  @param props the opengraph properites extracted from the document
+  */
   private def extractImages(props: OpenGraphProperties): List[Image] = 
-      extract[Image](props.get("og:image")){
+      extractMedia[Image](props.get("og:image")){
         case (url, i) => 
           Image(
             url,
@@ -82,8 +95,11 @@ object OpenGraph {
           )
       }
 
+  /** Extract opengraph videos
+  *  @param props the opengraph properites extracted from the document
+  */
   private def extractVideos(props: OpenGraphProperties): List[Video] = 
-      extract[Video](props.get("og:video")){
+      extractMedia[Video](props.get("og:video")){
         case (url, i) => 
             Video(
               url,
@@ -95,8 +111,11 @@ object OpenGraph {
             )
       }
 
+  /** Extract opengraph audio
+  *  @param props the opengraph properites extracted from the document
+  */
   private def extractAudios(props: Map[String, List[String]]): List[Audio] = 
-      extract[Audio](props.get("og:audio")){
+      extractMedia[Audio](props.get("og:audio")){
         case (url, i) => 
           Audio(
             url,
@@ -104,10 +123,5 @@ object OpenGraph {
             secureUrl = props.get("og:audio:secure_url").flatMap(_.lift(i))
           )
       }
-
-  private def extract[A](tags: Option[List[String]])(block: MediaConverter[A]): List[A] =
-    tags
-      .map(_.zipWithIndex.map{ case (url, i) => block(url, i) })
-      .getOrElse(Nil)
 
 }

@@ -8,13 +8,14 @@ import org.scalatest._
 class OpenGraphSpec extends FlatSpec with Matchers with EitherValues {
 
   val lightBendPost = 
-    Await.result(OpenGraph.extract("http://www.lightbend.com/blog/lightbend-tech-digest-march-2017"), 2 seconds)
+    Await.result(OpenGraph.extract("https://www.lightbend.com/blog/lightbend-tech-digest-march-2017"), 5 seconds)
 
   "LightBend blog post" should "have title" in {
     lightBendPost.right.value.title should be (Some("Lightbend Tech Digest - March 2017 - @lightbend"))
   }
 
   it should "have at least 1 image" in {
+    println(lightBendPost.right.value.images)
     lightBendPost.right.value.images.length should be (1)
   }
 
@@ -39,7 +40,7 @@ class OpenGraphSpec extends FlatSpec with Matchers with EitherValues {
   }  
 
   val pin = 
-    Await.result(OpenGraph.extract("https://cz.pinterest.com/pin/AbSG5TJ_j3A0TUh5kQTR2AAMG-tbZ9kfPI037UgVZ4mug3hAazciGjA/"), 2 seconds)
+    Await.result(OpenGraph.extract("https://cz.pinterest.com/pin/AbSG5TJ_j3A0TUh5kQTR2AAMG-tbZ9kfPI037UgVZ4mug3hAazciGjA/"), 5 seconds)
 
   "Pinterest pin" should "have title" in {
     pin.right.value.title shouldBe defined
@@ -80,9 +81,11 @@ class OpenGraphSpec extends FlatSpec with Matchers with EitherValues {
   }  
 
   val youtube = 
-    Await.result(OpenGraph.extract("https://www.youtube.com/watch?v=AAMncMqpOds"), 2 seconds)
+    Await.result(OpenGraph.extract("https://www.youtube.com/watch?v=AAMncMqpOds"), 10 seconds)
 
-  "Youtube video" should "have title" in {
+  println(youtube)
+
+  "Youtube video" should "be found" in {
     youtube.right.value.title shouldBe defined
   }
 
@@ -135,3 +138,5 @@ class OpenGraphSpec extends FlatSpec with Matchers with EitherValues {
   }  
 
 }
+
+

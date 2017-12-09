@@ -4,11 +4,11 @@ name := "opengraph4s"
 
 organization := "com.typedlabs"
 
-scalaVersion := "2.12.1"
+scalaVersion := "2.12.4"
 
-version      := "0.1.0"
+version      := "0.1.1"
 
-crossScalaVersions := Seq(scalaVersion.value,"2.11.8")
+crossScalaVersions := Seq(scalaVersion.value, "2.11.8")
 
 bintrayRepository := "releases"
 
